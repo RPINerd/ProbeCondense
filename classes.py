@@ -1,7 +1,7 @@
-class Primer:
-    def __init__(self, primer, id):
+class Probe:
+    def __init__(self, probe, id):
         self.name = id
-        self.sequence = primer
+        self.sequence = probe
         self.hasForwardMatch = False
         self.hasReverseMatch = False
 
