@@ -14,7 +14,6 @@
 from fuzzysearch import find_near_matches
 
 import classes
-import utils
 
 
 def findMatches(probes: list[classes.Probe], sequence, isReverseStrand) -> classes.MatchCollection:
@@ -26,14 +25,10 @@ def findMatches(probes: list[classes.Probe], sequence, isReverseStrand) -> class
 
         for hit in matchList:
             matchCollection.addMatch(classes.Match(probe.name, hit.matched, hit.start))
-            if isReverseStrand:
-                probe.hasReverseMatch = True
-            else:
-                probe.hasForwardMatch = True
     return matchCollection
 
 
-def layoutProbeMap(sequence, forwardMatches, reverseMatches) -> None:
+def layoutProbeMap(sequence, probeBindings) -> None:
     basesPerLine = 60
     spaceString = " " * 130
 
@@ -48,48 +43,29 @@ def main(probes, targets) -> None:
 
     for sequence in targets:
         # Create match collections
-        forwardMatches = findMatches(newProbes, sequence, False)
-        reverseMatches = findMatches(newProbes, utils.reverse(sequence), True)
+        probeBindings = findMatches(newProbes, sequence, False)
 
-        print(forwardMatches.matches)
-        print(reverseMatches.matches)
+        print(probeBindings.matches)
 
-        # Adjust forwardMatches for the figure
-        for j in range(0, len(forwardMatches.matches)):
-            forwardMatches.matches[j].position = forwardMatches.matches[j].position - len(
-                forwardMatches.matches[j].matchingText
+        # Adjust probeBindings for the figure
+        for j in range(0, len(probeBindings.matches)):
+            probeBindings.matches[j].position = probeBindings.matches[j].position - len(
+                probeBindings.matches[j].matchingText
             )
-            forwardMatches.matches[j].end = forwardMatches.matches[j].position + len(
-                forwardMatches.matches[j].matchingText
+            probeBindings.matches[j].end = probeBindings.matches[j].position + len(
+                probeBindings.matches[j].matchingText
             )
-            if forwardMatches.matches[j].position < 0:
-                forwardMatches.matches[j].position = forwardMatches.matches[j].position + len(sequence)
-            if forwardMatches.matches[j].end > len(sequence):
-                forwardMatches.matches[j].end = forwardMatches.matches[j].end - len(sequence)
+            if probeBindings.matches[j].position < 0:
+                probeBindings.matches[j].position = probeBindings.matches[j].position + len(sequence)
+            if probeBindings.matches[j].end > len(sequence):
+                probeBindings.matches[j].end = probeBindings.matches[j].end - len(sequence)
 
-        # now adjust reverseMatches for the figure
-        for j in range(0, len(reverseMatches.matches)):
-            reverseMatches.matches[j].position = len(sequence) - reverseMatches.matches[j].position
-            reverseMatches.matches[j].end = reverseMatches.matches[j].position + len(
-                reverseMatches.matches[j].matchingText
-            )
-            if reverseMatches.matches[j].position < 0:
-                reverseMatches.matches[j].position = reverseMatches.matches[j].position + len(sequence)
-            if reverseMatches.matches[j].end > len(sequence):
-                reverseMatches.matches[j].end = reverseMatches.matches[j].end - len(sequence)
+        # Sort probeBindings
+        probeBindings.sortMatches()
 
-        # sort forwardMatches and reverseMatches.
-        forwardMatches.sortMatches()
-        reverseMatches.sortMatches()
+        layoutProbeMap(sequence, probeBindings)
 
-        layoutProbeMap(sequence, forwardMatches, reverseMatches)
-
-        # write summary of probes
+        # Write summary of probes
         # writeprobesites(newProbes)
-
-        # set probes hasMatch to false
-        for primer in newProbes:
-            primer.hasForwardMatch = False
-            primer.hasReverseMatch = False
 
     return
